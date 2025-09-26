@@ -1,0 +1,73 @@
+name: Terraform PR (Plan)
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types: [ opened, reopened, ready_for_review, synchronize ]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Prep plugin cache
+        run: mkdir -p ~/.terraform.d/plugin-cache
+
+      - name: Find Terraform directories
+        id: find
+        run: |
+          set -euo pipefail
+          mapfile -t DIRS < <(git ls-files -z '*.tf' | xargs -0 -n1 dirname | sort -u)
+          if [ ${#DIRS[@]} -eq 0 ]; then
+            echo "dirs=[]" >> $GITHUB_OUTPUT
+          else
+            JSON=$(printf '%s\n' "${DIRS[@]}" | jq -R -s -c 'split("\n")[:-1]')
+            echo "dirs=$JSON" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Plan each directory
+        if: steps.find.outputs.dirs != '[]'
+        run: |
+          set -euo pipefail
+          for d in $(echo '${{ steps.find.outputs.dirs }}' | jq -r '.[]'); do
+            echo "=== Planning $d ==="
+            pushd "$d" >/dev/null
+
+            if [ "$d" = "." ]; then
+              KEY_SUFFIX="root/terraform.tfstate"
+            else
+              KEY_SUFFIX="$d/terraform.tfstate"
+            fi
+            KEY="${GITHUB_REPOSITORY}/${KEY_SUFFIX}"
+
+            terraform init -input=false -upgrade -reconfigure \
+            -backend-config="key=${KEY}"
+
+
+
+            terraform validate
+            terraform plan -input=false -no-color -out=tfplan || true
+
+            popd >/dev/null
+          done
