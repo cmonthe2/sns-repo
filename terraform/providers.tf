@@ -1,10 +1,9 @@
-
 terraform {
   required_version = ">= 1.8.0"
 
   backend "s3" {
     bucket         = "tfstate-cif0ip"
-    key            = "cmonthe2/repo/terraform.tfstate"
+    key            = "cmonthe2/sns-repo/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "tf-locks"
     encrypt        = true
@@ -19,5 +18,6 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
+
 }
