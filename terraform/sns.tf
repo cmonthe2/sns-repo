@@ -26,11 +26,10 @@ resource "aws_sns_topic_subscription" "sms_subscription" {
   endpoint  = "2408109458"
 }
 
-# Create SNS Topic
 resource "aws_sns_topic" "Default_CloudWatch_Alarms_Topic" {
   name = "Default_CloudWatch_Alarms_Topic"
-  tags = {
-    Environment = "dev"
-    Purpose     = "notifications"
+
+  lifecycle {
+    ignore_changes = [tags]
   }
 }
