@@ -42,6 +42,12 @@ jobs:
             echo "dirs=$JSON" >> $GITHUB_OUTPUT
           fi
 
+      - name: Download plan artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplans-${{ github.run_id }}
+          path: .
+
       - name: Apply each directory
         if: steps.find.outputs.dirs != '[]'
         run: |
@@ -58,11 +64,14 @@ jobs:
             KEY="${GITHUB_REPOSITORY}/${KEY_SUFFIX}"
 
             terraform init -input=false -upgrade -reconfigure \
-            -backend-config="key=${KEY}"
+              -backend-config="key=${KEY}"
 
-
-
-            terraform apply -input=false -auto-approve tfplan || terraform apply -input=false -auto-approve
+            if [ -f tfplan ]; then
+              terraform apply -input=false -auto-approve tfplan
+            else
+              echo "⚠️ No tfplan found, applying without pre-generated plan"
+              terraform apply -input=false -auto-approve
+            fi
 
             popd >/dev/null
           done
