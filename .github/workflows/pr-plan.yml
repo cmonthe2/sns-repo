@@ -7,7 +7,8 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+  pull-requests: write   # needed to comment on PR
+  id-token: write        # OIDC -> AWS
 
 env:
   AWS_REGION: us-east-1
@@ -46,10 +47,12 @@ jobs:
             echo "dirs=$JSON" >> $GITHUB_OUTPUT
           fi
 
-      - name: Plan each directory
+      - name: Run Terraform plan
+        id: plan
         if: steps.find.outputs.dirs != '[]'
         run: |
           set -euo pipefail
+          SUMMARY=""
           for d in $(echo '${{ steps.find.outputs.dirs }}' | jq -r '.[]'); do
             echo "=== Planning $d ==="
             pushd "$d" >/dev/null
@@ -65,7 +68,35 @@ jobs:
               -backend-config="key=${KEY}"
 
             terraform validate
-            terraform plan -input=false -no-color -out=tfplan || true
+
+            set +e
+            PLAN_OUT=$(terraform plan -input=false -no-color)
+            CODE=$?
+            set -e
+
+            SUMMARY+="\n### 📂 Directory: \`$d\`\n"
+            SUMMARY+="\n<details><summary>Show Plan</summary>\n\n\`\`\`hcl\n${PLAN_OUT}\n\`\`\`\n</details>\n"
+
+            if [ $CODE -eq 1 ]; then
+              echo "Plan failed in $d"; exit 1
+            fi
 
             popd >/dev/null
           done
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment plan on PR
+        if: steps.find.outputs.dirs != '[]'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## 📝 Terraform Plan Results\n${{ steps.plan.outputs.summary }}`;
+            const { context } = github;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });

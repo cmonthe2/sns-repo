@@ -60,12 +60,8 @@ jobs:
             terraform init -input=false -upgrade -reconfigure \
               -backend-config="key=${KEY}"
 
-            if [ -f tfplan ]; then
-              terraform apply -input=false -auto-approve tfplan
-            else
-              echo "⚠️ No tfplan found, applying without pre-generated plan"
-              terraform apply -input=false -auto-approve
-            fi
+            terraform plan -input=false -no-color
+            terraform apply -input=false -auto-approve
 
             popd >/dev/null
           done
