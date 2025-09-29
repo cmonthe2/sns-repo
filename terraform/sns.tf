@@ -8,11 +8,11 @@ resource "aws_sns_topic" "my_topic" {
 }
 
 resource "aws_sns_topic_subscription" "email_subscription" {
-  topic_arn                        = "arn:aws:sns:us-east-1:204469479814:Default_CloudWatch_Alarms_Topic"
-  protocol                         = "email"
-  endpoint                         = "cmonthe8@outlook.com"
-  confirmation_timeout_in_minutes  = 1
-  raw_message_delivery             = false
+  topic_arn                       = "arn:aws:sns:us-east-1:204469479814:Default_CloudWatch_Alarms_Topic"
+  protocol                        = "email"
+  endpoint                        = "cmonthe8@outlook.com"
+  confirmation_timeout_in_minutes = 1
+  raw_message_delivery            = false
 }
 
 
@@ -34,4 +34,3 @@ resource "aws_sns_topic" "Default_CloudWatch_Alarms_Topic" {
     Purpose     = "notifications"
   }
 }
-
