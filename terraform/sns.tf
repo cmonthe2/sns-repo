@@ -7,12 +7,14 @@ resource "aws_sns_topic" "my_topic" {
   }
 }
 
-# Create SNS Topic Subscription
 resource "aws_sns_topic_subscription" "email_subscription" {
-  topic_arn = aws_sns_topic.my_topic.arn
-  protocol  = "email"
-  endpoint  = "cmonthe8@outlook.com"
+  topic_arn                        = "arn:aws:sns:us-east-1:204469479814:Default_CloudWatch_Alarms_Topic"
+  protocol                         = "email"
+  endpoint                         = "cmonthe8@outlook.com"
+  confirmation_timeout_in_minutes  = 1
+  raw_message_delivery             = false
 }
+
 
 # Output the SNS Topic ARN
 output "sns_topic_arn" {
@@ -23,3 +25,13 @@ resource "aws_sns_topic_subscription" "sms_subscription" {
   protocol  = "sms"
   endpoint  = "2408109458"
 }
+
+# Create SNS Topic
+resource "aws_sns_topic" "Default_CloudWatch_Alarms_Topic" {
+  name = "Default_CloudWatch_Alarms_Topic"
+  tags = {
+    Environment = "dev"
+    Purpose     = "notifications"
+  }
+}
+
