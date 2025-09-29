@@ -1,6 +1,8 @@
 # Create SNS Topic
 resource "aws_sns_topic" "my_topic" {
   name = "my-notification-topic"
+  kms_master_key_id = "arn:aws:kms:us-east-1:204469479814:key/76d279c0-07be-4b61-b970-12b7123d3970"  
+  display_name      = "My Notification Topic"
   tags = {
     Environment = "dev"
     Purpose     = "notifications"
