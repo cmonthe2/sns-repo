@@ -62,12 +62,18 @@ jobs:
             KEY="${GITHUB_REPOSITORY}/${KEY_SUFFIX}"
 
             terraform init -input=false -upgrade -reconfigure \
-            -backend-config="key=${KEY}"
-
-
+              -backend-config="key=${KEY}"
 
             terraform validate
             terraform plan -input=false -no-color -out=tfplan || true
 
             popd >/dev/null
           done
+
+      - name: Upload plan artifacts
+        if: steps.find.outputs.dirs != '[]'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplans-${{ github.run_id }}
+          path: |
+            **/tfplan

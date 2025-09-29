@@ -10,36 +10,16 @@ resource "aws_sns_topic" "my_topic" {
 # Create SNS Topic Subscription
 resource "aws_sns_topic_subscription" "email_subscription" {
   topic_arn = aws_sns_topic.my_topic.arn
-  protocol  = "email"                # Can be: sqs, sms, lambda, email, etc.
-  endpoint  = "cmonthe8@outlook.com" # Replace with your email address
+  protocol  = "email"
+  endpoint  = "cmonthe8@outlook.com"
 }
 
-# Optional: SNS Topic Policy
-resource "aws_sns_topic_policy" "default" {
-  arn = aws_sns_topic.my_topic.arn
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          AWS = "*"
-        }
-        Action = [
-          "SNS:Publish",
-          "SNS:Subscribe"
-        ]
-        Resource = aws_sns_topic.my_topic.arn
-        Condition = {
-          StringEquals = {
-            "AWS:SourceOwner" : data.aws_caller_identity.current.account_id
-          }
-        }
-      }
-    ]
-  })
+# Output the SNS Topic ARN
+output "sns_topic_arn" {
+  value = aws_sns_topic.my_topic.arn
 }
-
-# Get current AWS account ID
-data "aws_caller_identity" "current" {}
+resource "aws_sns_topic_subscription" "sms_subscription" {
+  topic_arn = aws_sns_topic.my_topic.arn
+  protocol  = "sms"
+  endpoint  = "2408109458"
+}
