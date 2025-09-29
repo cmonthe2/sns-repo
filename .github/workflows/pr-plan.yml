@@ -69,11 +69,3 @@ jobs:
 
             popd >/dev/null
           done
-
-      - name: Upload plan artifacts
-        if: steps.find.outputs.dirs != '[]'
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplans-${{ github.run_id }}
-          path: |
-            **/tfplan
