@@ -7,7 +7,8 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+  pull-requests: write   # needed to comment on PR
+  id-token: write        # OIDC -> AWS
 
 env:
   AWS_REGION: us-east-1
@@ -46,10 +47,12 @@ jobs:
             echo "dirs=$JSON" >> $GITHUB_OUTPUT
           fi
 
-      - name: Plan each directory
+      - name: Run Terraform plan
+        id: plan
         if: steps.find.outputs.dirs != '[]'
         run: |
           set -euo pipefail
+          SUMMARY=""
           for d in $(echo '${{ steps.find.outputs.dirs }}' | jq -r '.[]'); do
             echo "=== Planning $d ==="
             pushd "$d" >/dev/null
@@ -65,15 +68,36 @@ jobs:
               -backend-config="key=${KEY}"
 
             terraform validate
-            terraform plan -input=false -no-color -out=tfplan || true
+
+            set +e
+            PLAN_OUT=$(terraform plan -input=false -no-color)
+            CODE=$?
+            set -e
+
+            SUMMARY+="\n### 📂 Directory: \`$d\`\n"
+            SUMMARY+="\n<details><summary>Show Plan</summary>\n\n\`\`\`hcl\n${PLAN_OUT}\n\`\`\`\n</details>\n"
+
+            if [ $CODE -eq 1 ]; then
+              echo "Plan failed in $d"; exit 1
+            fi
 
             popd >/dev/null
           done
+          # Save summary to file for PR comment
+          echo -e "$SUMMARY" > plan_summary.md
+          echo "summary-file=plan_summary.md" >> $GITHUB_OUTPUT
 
-      - name: Upload plan artifacts
+      - name: Comment plan on PR
         if: steps.find.outputs.dirs != '[]'
-        uses: actions/upload-artifact@v4
+        uses: actions/github-script@v7
         with:
-          name: tfplans-${{ github.run_id }}
-          path: |
-            **/tfplan
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('${{ steps.plan.outputs.summary-file }}', 'utf8');
+            const body = `## 📝 Terraform Plan Results\n${summary}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
