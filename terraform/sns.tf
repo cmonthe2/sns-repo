@@ -35,3 +35,4 @@ resource "aws_sns_topic" "Default_CloudWatch_Alarms_Topic" {
     ignore_changes = [tags]
   }
 }
+
