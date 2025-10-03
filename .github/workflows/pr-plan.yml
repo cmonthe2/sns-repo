@@ -1,3 +1,6 @@
+# 
+
+
 name: Terraform PR (Plan)
 
 on:
@@ -83,10 +86,31 @@ jobs:
 
             popd >/dev/null
           done
-          # Save summary to file for PR comment
           echo -e "$SUMMARY" > plan_summary.md
           echo "summary-file=plan_summary.md" >> $GITHUB_OUTPUT
 
+      # 🛡 Security: tfsec scan + comment directly on PR
+      - name: Run tfsec & Comment on PR
+        uses: aquasecurity/tfsec-pr-commenter-action@v1.0.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tfsec_args: --soft-fail  # don’t block merges, just report
+
+      # 🛡 Best Practices: TFLint
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.51.1
+
+      - name: Run TFLint per directory
+        if: steps.find.outputs.dirs != '[]'
+        run: |
+          for d in $(echo '${{ steps.find.outputs.dirs }}' | jq -r '.[]'); do
+            echo "=== TFLint $d ==="
+            tflint --chdir="$d" --disable-rule=terraform_unused_declarations || true
+          done
+
+      # 💬 Post Terraform plan summary as PR comment
       - name: Comment plan on PR
         if: steps.find.outputs.dirs != '[]'
         uses: actions/github-script@v7
