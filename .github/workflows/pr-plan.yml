@@ -87,6 +87,26 @@ jobs:
           echo -e "$SUMMARY" > plan_summary.md
           echo "summary-file=plan_summary.md" >> $GITHUB_OUTPUT
 
+      - name: run pre-commit
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: --all-files
+        env:
+          PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+          # To use a custom config file path, e.g. .github/.pre-commit-config.yaml
+          # PRE_COMMIT_CONFIG: ${{ github.workspace }}/.github/.pre-commit-config.yaml
+          # To disable the automatic git add after hooks modify files
+          # PRE_COMMIT_NO_GIT_ADD: true
+      - name: run tfsec
+        uses: aquasecurity/tfsec-github-action@v1.0.3
+        with:
+          args: --soft-fail --out results.json --format json . #allow merge but report issues
+      - name: run TFlint
+        uses: terraform-linters/tflint-action@v0.5.1
+        with:
+          args: --enable-rule=aws_instance_invalid_type
+
       - name: Comment plan on PR
         if: steps.find.outputs.dirs != '[]'
         uses: actions/github-script@v7
