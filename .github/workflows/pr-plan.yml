@@ -108,7 +108,7 @@ jobs:
         with:
           tflint_version: v0.51.1
       - name: Run TFLint per directory
-        run: tflint --disable-rule-terraform_unused_declarations --init && tflint -f compact .
+        run: tflint --disable-rule-terraform_unused_declarations
 
       - name: Comment plan on PR
         if: steps.find.outputs.dirs != '[]'
