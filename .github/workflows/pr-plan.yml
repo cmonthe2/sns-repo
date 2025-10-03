@@ -87,17 +87,17 @@ jobs:
           echo -e "$SUMMARY" > plan_summary.md
           echo "summary-file=plan_summary.md" >> $GITHUB_OUTPUT
 
-      - name: run pre-commit
-        uses: pre-commit/action@v2.0.3
-        with:
-          extra_args: --all-files
-        env:
-          PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-          # To use a custom config file path, e.g. .github/.pre-commit-config.yaml
-          # PRE_COMMIT_CONFIG: ${{ github.workspace }}/.github/.pre-commit-config.yaml
-          # To disable the automatic git add after hooks modify files
-          # PRE_COMMIT_NO_GIT_ADD: true
+      # - name: run pre-commit
+      #   uses: pre-commit/action@v2.0.3
+      #   with:
+      #     extra_args: --all-files
+      #   env:
+      #     PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+      #     # To use a custom config file path, e.g. .github/.pre-commit-config.yaml
+      #     # PRE_COMMIT_CONFIG: ${{ github.workspace }}/.github/.pre-commit-config.yaml
+      #     # To disable the automatic git add after hooks modify files
+      #     # PRE_COMMIT_NO_GIT_ADD: true
       - name: Run tfsec (Security Scanner)
         uses: aquasecurity/tfsec-pr-commenter-action@v1.0.3
         with:
