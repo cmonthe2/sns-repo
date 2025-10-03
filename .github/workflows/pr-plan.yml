@@ -98,14 +98,17 @@ jobs:
           # PRE_COMMIT_CONFIG: ${{ github.workspace }}/.github/.pre-commit-config.yaml
           # To disable the automatic git add after hooks modify files
           # PRE_COMMIT_NO_GIT_ADD: true
-      - name: run tfsec
-        uses: aquasecurity/tfsec-github-action@v1.0.3
+      - name: Run tfsec (Security Scanner)
+        uses: aquasecurity/tfsec-pr-commenter-action@v1.0.3
         with:
-          args: --soft-fail --out results.json --format json . #allow merge but report issues
-      - name: run TFlint
-        uses: terraform-linters/tflint-action@v0.5.1
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tfsec_args: --soft-fail --out results.json --format json . #allow merge but report issues
+      - name: Setup TFlint
+        uses: terraform-linters/setup-tflint@v4
         with:
-          args: --enable-rule=aws_instance_invalid_type
+          tflint_version: v0.51.1
+      - name: Run TFLint per directory
+        run: tflint --disable-rule-terraform_unused_declarations --init && tflint -f compact .
 
       - name: Comment plan on PR
         if: steps.find.outputs.dirs != '[]'
