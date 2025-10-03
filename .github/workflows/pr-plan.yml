@@ -102,7 +102,7 @@ jobs:
         uses: aquasecurity/tfsec-pr-commenter-action@v1.0.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tfsec_args: --soft-fail  #allow merge but report issues
+          tfsec_args: --hard-fail  #allow merge but report issues
       - name: Setup TFlint
         uses: terraform-linters/setup-tflint@v4
         with:
