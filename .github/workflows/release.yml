@@ -42,5 +42,4 @@ jobs:
             @semantic-release/git
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Disable npm plugin
-          NPM_TOKEN: ""
+          
